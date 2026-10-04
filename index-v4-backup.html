@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Speed Test V4</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#070b12;color:#fff;
+ font-family:Arial,sans-serif;
+}
+.app{
+ width:min(520px,94%);
+ margin:auto;padding:18px 0 35px;
+}
+h1{text-align:center;margin:8px 0 3px;font-size:29px}
+.sub{text-align:center;color:#8993a5;font-size:13px;margin-bottom:18px}
+
+.card{
+ background:#101722;border:1px solid #1d2735;
+ border-radius:20px;padding:16px;margin-bottom:14px;
+ box-shadow:0 8px 30px #0005;
+}
+
+.meter{
+ width:245px;height:245px;border-radius:50%;
+ margin:8px auto 18px;
+ background:conic-gradient(#00e676 0deg,#00e676 0deg,#172231 0deg);
+ display:flex;align-items:center;justify-content:center;
+ position:relative;
+}
+.meter:before{
+ content:"";position:absolute;
+ width:205px;height:205px;border-radius:50%;
+ background:#0b111a;
+}
+.meterText{position:relative;text-align:center}
+.speed{font-size:48px;font-weight:bold;line-height:1}
+.unit{color:#8993a5;font-size:14px;margin-top:7px}
+
+.status{text-align:center;color:#aeb8c7;margin-bottom:14px}
+
+.stats{
+ display:grid;grid-template-columns:repeat(3,1fr);
+ gap:9px;
+}
+.stat{
+ background:#0b111a;border-radius:13px;padding:12px 5px;
+ text-align:center;
+}
+.stat b{display:block;font-size:19px}
+.stat span{font-size:11px;color:#8993a5}
+
+canvas{
+ width:100%;height:150px;
+ background:#0b111a;border-radius:13px;
+}
+
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{
+ border:0;border-radius:13px;padding:14px;
+ font-weight:bold;font-size:15px;
+ color:#fff;background:#1769ff;
+}
+button:disabled{opacity:.45}
+.stop{background:#d9363e}
+.clear{background:#252f3e}
+
+.quality{
+ text-align:center;font-size:18px;
+ font-weight:bold;margin:14px 0 2px;
+}
+
+.history{margin-top:8px}
+.historyItem{
+ display:flex;justify-content:space-between;
+ align-items:center;
+ background:#0b111a;border-radius:12px;
+ padding:11px;margin-top:8px;font-size:13px;
+}
+.historyItem small{color:#8993a5}
+
+.best{
+ display:grid;grid-template-columns:1fr 1fr;
+ gap:10px;margin-top:10px;
+}
+.best div{
+ background:#0b111a;border-radius:12px;
+ padding:12px;text-align:center;
+}
+.best b{font-size:20px}
+.best small{display:block;color:#8993a5;margin-top:4px}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<h1>⚡ DinoTest</h1>
+<div class="sub">Local Network Performance Test</div>
+
+<div class="card">
+
+<div class="meter" id="meter">
+ <div class="meterText">
+  <div class="speed" id="speed">0</div>
+  <div class="unit">Mbps</div>
+ </div>
+</div>
+
+<div class="status" id="status">Siap melakukan tes</div>
+
+<div class="stats">
+ <div class="stat">
+  <b id="ping">--</b>
+  <span>PING ms</span>
+ </div>
+ <div class="stat">
+  <b id="download">--</b>
+  <span>DOWNLOAD</span>
+ </div>
+ <div class="stat">
+  <b id="upload">--</b>
+  <span>UPLOAD</span>
+ </div>
+</div>
+
+<div class="quality" id="quality">—</div>
+
+</div>
+
+<div class="card">
+ <canvas id="graph"></canvas>
+</div>
+
+<div class="card">
+ <div class="buttons">
+  <button id="startBtn" onclick="startTest()">🚀 MULAI TES</button>
+  <button id="stopBtn" class="stop" onclick="stopTest()" disabled>⛔ STOP</button>
+ </div>
+</div>
+
+<div class="card">
+ <b>🏆 HASIL TERBAIK</b>
+ <div class="best">
+  <div>
+   <b id="bestDown">--</b>
+   <small>Download Mbps</small>
+  </div>
+  <div>
+   <b id="bestUp">--</b>
+   <small>Upload Mbps</small>
+  </div>
+ </div>
+</div>
+
+<div class="card history">
+ <b>📜 RIWAYAT TES</b>
+ <div id="history"></div>
+ <button class="clear" style="width:100%;margin-top:12px" onclick="clearHistory()">
+  🗑️ HAPUS RIWAYAT
+ </button>
+</div>
+
+</div>
+
+<script>
+const meter=document.getElementById("meter");
+const speedEl=document.getElementById("speed");
+const pingEl=document.getElementById("ping");
+const downEl=document.getElementById("download");
+const upEl=document.getElementById("upload");
+const statusEl=document.getElementById("status");
+const qualityEl=document.getElementById("quality");
+const canvas=document.getElementById("graph");
+const ctx=canvas.getContext("2d");
+
+let running=false;
+let controller=null;
+let graphData=[];
+let currentSpeed=0;
+
+function resizeCanvas(){
+ const d=devicePixelRatio||1;
+ canvas.width=canvas.clientWidth*d;
+ canvas.height=canvas.clientHeight*d;
+ ctx.setTransform(d,0,0,d,0,0);
+ drawGraph();
+}
+window.addEventListener("resize",resizeCanvas);
+
+function drawGraph(){
+ const w=canvas.clientWidth;
+ const h=canvas.clientHeight;
+
+ ctx.clearRect(0,0,w,h);
+
+ ctx.strokeStyle="#202b3a";
+ ctx.lineWidth=1;
+
+ for(let y=20;y<h;y+=30){
+  ctx.beginPath();
+  ctx.moveTo(0,y);
+  ctx.lineTo(w,y);
+  ctx.stroke();
+ }
+
+ if(graphData.length<2)return;
+
+ const max=Math.max(10,...graphData)*1.15;
+
+ ctx.beginPath();
+
+ graphData.forEach((v,i)=>{
+  const x=i/(graphData.length-1)*w;
+  const y=h-(v/max*h);
+
+  if(i===0)ctx.moveTo(x,y);
+  else ctx.lineTo(x,y);
+ });
+
+ ctx.strokeStyle="#00e676";
+ ctx.lineWidth=3;
+ ctx.stroke();
+}
+
+function addGraph(v){
+ graphData.push(v);
+ if(graphData.length>80)graphData.shift();
+ drawGraph();
+}
+
+function setSpeed(v){
+ currentSpeed=v;
+ speedEl.textContent=v.toFixed(1);
+
+ let deg=Math.min(360,v/200*360);
+ meter.style.background=
+ `conic-gradient(#00e676 ${deg}deg,#172231 ${deg}deg)`;
+}
+
+function sleep(ms){
+ return new Promise(r=>setTimeout(r,ms));
+}
+
+async function pingTest(){
+ statusEl.textContent="📶 Mengukur ping...";
+
+ let times=[];
+
+ for(let i=0;i<4;i++){
+  if(!running)throw new Error("STOP");
+
+  const t=performance.now();
+
+  try{
+   await fetch("https://speed.cloudflare.com/__down?bytes=1000",{
+    cache:"no-store",
+    signal:AbortSignal.timeout(5000)
+   });
+   times.push(performance.now()-t);
+  }catch(e){}
+ }
+
+ if(!times.length)return 0;
+
+ const avg=times.reduce((a,b)=>a+b,0)/times.length;
+
+ pingEl.textContent=Math.round(avg);
+
+ return avg;
+}
+
+async function downloadTest(){
+ statusEl.textContent="📥 Menguji download...";
+
+ const sizes=[
+  1000000,
+  5000000,
+  10000000,
+  25000000
+ ];
+
+ let total=0;
+ let start=performance.now();
+
+ for(const size of sizes){
+
+  if(!running)throw new Error("STOP");
+
+  const t=performance.now();
+
+  try{
+   const res=await fetch(
+    "https://speed.cloudflare.com/__down?bytes="+size,
+    {
+     cache:"no-store",
+     signal:AbortSignal.timeout(12000)
+    }
+   );
+
+   const reader=res.body.getReader();
+
+   while(true){
+    if(!running)throw new Error("STOP");
+
+    const {done,value}=await reader.read();
+
+    if(done)break;
+
+    total+=value.length;
+
+    const elapsed=(performance.now()-start)/1000;
+
+    if(elapsed>0){
+     const mbps=(total*8/elapsed)/1000000;
+     setSpeed(mbps);
+     addGraph(mbps);
+     downEl.textContent=mbps.toFixed(1);
+    }
+   }
+
+  }catch(e){
+   if(e.message==="STOP")throw e;
+  }
+ }
+
+ const elapsed=(performance.now()-start)/1000;
+
+ return elapsed>0?(total*8/elapsed)/1000000:0;
+}
+
+async function uploadTest(){
+ statusEl.textContent="📤 Menguji upload...";
+
+ let totalBytes=0;
+ let totalTime=0;
+
+ const size=2*1024*1024;
+
+ const data=new Uint8Array(size);
+
+ crypto.getRandomValues(data.subarray(0,65536));
+
+ for(let i=65536;i<size;i+=65536){
+  data.set(data.subarray(0,65536),i);
+ }
+
+ for(let i=0;i<3;i++){
+
+  if(!running)throw new Error("STOP");
+
+  const start=performance.now();
+
+  try{
+   await fetch(
+    "https://speed.cloudflare.com/__up",
+    {
+     method:"POST",
+     body:data,
+     cache:"no-store",
+     signal:AbortSignal.timeout(12000)
+    }
+   );
+
+   const sec=(performance.now()-start)/1000;
+
+   totalBytes+=size;
+   totalTime+=sec;
+
+   if(totalTime>0){
+    const mbps=(totalBytes*8/totalTime)/1000000;
+    setSpeed(mbps);
+    addGraph(mbps);
+    upEl.textContent=mbps.toFixed(1);
+   }
+
+  }catch(e){
+   if(e.name==="AbortError"){
+    continue;
+   }
+
+   if(e.message==="STOP")throw e;
+  }
+ }
+
+ return parseFloat(upEl.textContent)||0;
+}
+
+function quality(d,p,u){
+ let score=0;
+
+ if(d>=50)score+=3;
+ else if(d>=20)score+=2;
+ else if(d>=5)score+=1;
+
+ if(u>=10)score+=2;
+ else if(u>=3)score+=1;
+
+ if(p<=30)score+=3;
+ else if(p<=70)score+=2;
+ else if(p<=120)score+=1;
+
+ if(score>=7)return "🟢 SANGAT BAGUS";
+ if(score>=5)return "🟡 BAGUS";
+ if(score>=3)return "🟠 SEDANG";
+ return "🔴 LEMAH";
+}
+
+async function startTest(){
+
+ if(running)return;
+
+ running=true;
+ controller=new AbortController();
+
+ document.getElementById("startBtn").disabled=true;
+ document.getElementById("stopBtn").disabled=false;
+
+ graphData=[];
+ drawGraph();
+
+ pingEl.textContent="--";
+ downEl.textContent="--";
+ upEl.textContent="--";
+ qualityEl.textContent="—";
+
+ try{
+
+  const p=await pingTest();
+
+  if(!running)throw new Error("STOP");
+
+  const d=await downloadTest();
+
+  if(!running)throw new Error("STOP");
+
+  const u=await uploadTest();
+
+  if(!running)throw new Error("STOP");
+
+  setSpeed(d);
+
+  qualityEl.textContent=quality(d,p,u);
+  statusEl.textContent="✅ Tes selesai";
+
+  saveResult({
+   ping:Math.round(p),
+   down:d,
+   up:u,
+   quality:quality(d,p,u),
+   time:new Date().toLocaleTimeString("id-ID")
+  });
+
+  loadHistory();
+
+ }catch(e){
+
+  if(e.message==="STOP"){
+   statusEl.textContent="⛔ Tes dihentikan";
+  }else{
+   statusEl.textContent="⚠️ Tes selesai dengan keterbatasan";
+  }
+
+ }finally{
+
+  running=false;
+  controller=null;
+
+  document.getElementById("startBtn").disabled=false;
+  document.getElementById("stopBtn").disabled=true;
+ }
+}
+
+function stopTest(){
+ if(!running)return;
+
+ running=false;
+
+ if(controller)controller.abort();
+
+ statusEl.textContent="⛔ Menghentikan tes...";
+}
+
+function saveResult(r){
+
+ let history=JSON.parse(localStorage.getItem("speedtest_v4")||"[]");
+
+ history.unshift(r);
+
+ history=history.slice(0,20);
+
+ localStorage.setItem("speedtest_v4",JSON.stringify(history));
+}
+
+function loadHistory(){
+
+ const box=document.getElementById("history");
+
+ let history=JSON.parse(localStorage.getItem("speedtest_v4")||"[]");
+
+ box.innerHTML="";
+
+ if(!history.length){
+  box.innerHTML='<div style="color:#8993a5;margin-top:10px">Belum ada hasil.</div>';
+  document.getElementById("bestDown").textContent="--";
+  document.getElementById("bestUp").textContent="--";
+  return;
+ }
+
+ let bestD=0;
+ let bestU=0;
+
+ history.forEach(r=>{
+
+  bestD=Math.max(bestD,r.down||0);
+  bestU=Math.max(bestU,r.up||0);
+
+  const div=document.createElement("div");
+
+  div.className="historyItem";
+
+  div.innerHTML=
+   `<div>
+    <b>↓ ${Number(r.down).toFixed(1)} Mbps</b>
+    &nbsp; <b>↑ ${Number(r.up).toFixed(1)} Mbps</b>
+    <br><small>Ping ${r.ping} ms • ${r.time}</small>
+   </div>
+   <div>${r.quality}</div>`;
+
+  box.appendChild(div);
+ });
+
+ document.getElementById("bestDown").textContent=bestD.toFixed(1);
+ document.getElementById("bestUp").textContent=bestU.toFixed(1);
+}
+
+function clearHistory(){
+
+ if(confirm("Hapus semua riwayat tes?")){
+  localStorage.removeItem("speedtest_v4");
+  loadHistory();
+ }
+}
+
+resizeCanvas();
+loadHistory();
+</script>
+
+</body>
+</html>

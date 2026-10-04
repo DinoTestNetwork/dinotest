@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DinoTest V6</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#070a10;
+    color:#fff;
+    min-height:100vh;
+}
+
+.container{
+    width:min(620px,94%);
+    margin:auto;
+    padding:22px 0 40px;
+}
+
+header{
+    text-align:center;
+    margin-bottom:18px;
+}
+
+.logo{
+    font-size:34px;
+    font-weight:900;
+}
+
+.logo span{
+    color:#00e5ff;
+}
+
+.sub{
+    color:#8993a5;
+    font-size:13px;
+    margin-top:5px;
+}
+
+.card{
+    background:#101620;
+    border:1px solid #202a39;
+    border-radius:22px;
+    padding:18px;
+    box-shadow:0 15px 40px #0008;
+    margin-bottom:15px;
+}
+
+.speedbox{
+    text-align:center;
+}
+
+.speed{
+    position:relative;
+    width:270px;
+    height:270px;
+    margin:auto;
+}
+
+svg{
+    width:100%;
+    height:100%;
+    transform:rotate(-135deg);
+}
+
+.track{
+    fill:none;
+    stroke:#263142;
+    stroke-width:13;
+}
+
+.progress{
+    fill:none;
+    stroke:#00e5ff;
+    stroke-width:13;
+    stroke-linecap:round;
+    stroke-dasharray:565;
+    stroke-dashoffset:565;
+    transition:.25s;
+}
+
+.speedvalue{
+    position:absolute;
+    left:0;
+    right:0;
+    top:98px;
+    font-size:43px;
+    font-weight:900;
+}
+
+.unit{
+    position:absolute;
+    left:0;
+    right:0;
+    top:151px;
+    color:#8d99aa;
+    font-size:14px;
+}
+
+.phase{
+    color:#00e5ff;
+    font-size:13px;
+    min-height:20px;
+    margin-top:-8px;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:9px;
+    margin-top:17px;
+}
+
+.stat{
+    background:#090e16;
+    border-radius:14px;
+    padding:13px 4px;
+    text-align:center;
+}
+
+.stat b{
+    display:block;
+    font-size:20px;
+}
+
+.stat small{
+    color:#7e899b;
+    font-size:11px;
+}
+
+canvas{
+    width:100%;
+    height:190px;
+    display:block;
+    background:#090e16;
+    border-radius:15px;
+}
+
+.graph-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.graph-title small{
+    color:#718096;
+}
+
+.buttons{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+button{
+    border:0;
+    border-radius:14px;
+    padding:15px 10px;
+    font-size:14px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.start{
+    background:#00e5ff;
+    color:#001014;
+}
+
+.stop{
+    background:#252e3c;
+    color:#fff;
+}
+
+button:disabled{
+    opacity:.4;
+}
+
+.result{
+    text-align:center;
+}
+
+.result h3{
+    margin-top:0;
+}
+
+.result-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.result-box{
+    background:#090e16;
+    border-radius:15px;
+    padding:15px 5px;
+}
+
+.result-box small{
+    color:#7e899b;
+}
+
+.big{
+    font-size:28px;
+    font-weight:900;
+    margin-top:5px;
+}
+
+.badge{
+    display:inline-block;
+    padding:8px 17px;
+    border-radius:30px;
+    background:#17313a;
+    color:#00e5ff;
+    margin:14px 0;
+    font-weight:bold;
+}
+
+.action-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.share{
+    background:#00e5ff;
+    color:#001014;
+}
+
+.retry{
+    background:#252e3c;
+    color:white;
+}
+
+.history-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    padding:12px 0;
+    border-bottom:1px solid #202938;
+    font-size:12px;
+}
+
+.history-item:last-child{
+    border-bottom:0;
+}
+
+.history-result{
+    text-align:right;
+    line-height:1.5;
+}
+
+.clear{
+    width:100%;
+    margin-top:10px;
+    background:#252e3c;
+    color:#fff;
+}
+
+.hidden{
+    display:none;
+}
+
+.footer{
+    text-align:center;
+    color:#596578;
+    font-size:11px;
+    margin-top:20px;
+}
+
+.live{
+    display:inline-block;
+    font-size:10px;
+    color:#00e5ff;
+    border:1px solid #00e5ff;
+    border-radius:20px;
+    padding:4px 8px;
+}
+
+@media(max-width:400px){
+
+    .speed{
+        width:230px;
+        height:230px;
+    }
+
+    .speedvalue{
+        top:82px;
+        font-size:37px;
+    }
+
+    .unit{
+        top:133px;
+    }
+
+    .big{
+        font-size:23px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <div class="logo">🦖 Dino<span>Test</span></div>
+    <div class="sub">Professional Internet Speed Test V6</div>
+</header>
+
+<div class="card speedbox">
+
+<div class="speed">
+
+<svg viewBox="0 0 220 220">
+
+<circle
+class="track"
+cx="110"
+cy="110"
+r="90"
+stroke-dasharray="565"
+stroke-dashoffset="0"/>
+
+<circle
+id="progress"
+class="progress"
+cx="110"
+cy="110"
+r="90"/>
+
+</svg>
+
+<div id="speedValue" class="speedvalue">0.0</div>
+<div class="unit">Mbps</div>
+
+</div>
+
+<div id="phase" class="phase">
+Siap melakukan tes
+</div>
+
+<div class="stats">
+
+<div class="stat">
+<b id="ping">--</b>
+<small>Ping ms</small>
+</div>
+
+<div class="stat">
+<b id="jitter">--</b>
+<small>Jitter ms</small>
+</div>
+
+<div class="stat">
+<b id="loss">--</b>
+<small>Loss %</small>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="graph-title">
+<strong>📈 Grafik Kecepatan</strong>
+<span id="live" class="live">READY</span>
+</div>
+
+<canvas id="graph"></canvas>
+
+</div>
+
+<div class="card">
+
+<div class="buttons">
+
+<button id="start" class="start">
+🚀 MULAI TES
+</button>
+
+<button id="stop" class="stop" disabled>
+⛔ STOP
+</button>
+
+</div>
+
+</div>
+
+<div id="resultCard" class="card result hidden">
+
+<h3>📊 HASIL TES</h3>
+
+<div class="result-grid">
+
+<div class="result-box">
+<small>⬇️ Download</small>
+<div id="finalDown" class="big">-- Mbps</div>
+</div>
+
+<div class="result-box">
+<small>⬆️ Upload</small>
+<div id="finalUp" class="big">-- Mbps</div>
+</div>
+
+</div>
+
+<div class="stats">
+
+<div class="stat">
+<b id="finalPing">--</b>
+<small>Ping ms</small>
+</div>
+
+<div class="stat">
+<b id="finalJitter">--</b>
+<small>Jitter ms</small>
+</div>
+
+<div class="stat">
+<b id="finalLoss">--</b>
+<small>Loss %</small>
+</div>
+
+</div>
+
+<div id="quality" class="badge">
+--
+</div>
+
+<div class="action-row">
+
+<button id="share" class="share">
+📤 BAGIKAN
+</button>
+
+<button id="retry" class="retry">
+🔄 TES LAGI
+</button>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>🏆 Rekor Terbaik</h3>
+
+<div class="stats">
+
+<div class="stat">
+<b id="bestDown">--</b>
+<small>Download</small>
+</div>
+
+<div class="stat">
+<b id="bestUp">--</b>
+<small>Upload</small>
+</div>
+
+<div class="stat">
+<b id="bestPing">--</b>
+<small>Ping</small>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>📊 Riwayat Tes</h3>
+
+<div id="history">
+Belum ada riwayat.
+</div>
+
+<button id="clear" class="clear">
+🗑 Hapus Riwayat
+</button>
+
+</div>
+
+<div class="footer">
+DinoTest V6 • Browser-based network test
+</div>
+
+</div>
+
+<script>
+
+const DOWN="https://speed.cloudflare.com/__down";
+const UP="https://speed.cloudflare.com/__up";
+
+const $=id=>document.getElementById(id);
+
+const start=$("start");
+const stop=$("stop");
+const progress=$("progress");
+const speedValue=$("speedValue");
+const phase=$("phase");
+const canvas=$("graph");
+const ctx=canvas.getContext("2d");
+
+let running=false;
+let stopped=false;
+
+let samples=[];
+
+let finalDownload=0;
+let finalUpload=0;
+
+let animationTimer=null;
+
+
+/* =========================
+   CANVAS
+========================= */
+
+function resize(){
+
+    const d=devicePixelRatio||1;
+
+    canvas.width=canvas.clientWidth*d;
+    canvas.height=canvas.clientHeight*d;
+
+    ctx.setTransform(d,0,0,d,0,0);
+
+    draw();
+}
+
+window.addEventListener("resize",resize);
+
+
+/* =========================
+   GRAPH
+========================= */
+
+function draw(){
+
+    const w=canvas.clientWidth;
+    const h=canvas.clientHeight;
+
+    ctx.clearRect(0,0,w,h);
+
+    ctx.strokeStyle="#202938";
+    ctx.lineWidth=1;
+
+    for(let i=1;i<5;i++){
+
+        const y=i*h/5;
+
+        ctx.beginPath();
+        ctx.moveTo(0,y);
+        ctx.lineTo(w,y);
+        ctx.stroke();
+
+    }
+
+    if(samples.length<2)return;
+
+    const max=Math.max(
+        100,
+        ...samples.filter(Number.isFinite)
+    )*1.1;
+
+    ctx.strokeStyle="#00e5ff";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+
+    samples.forEach((v,i)=>{
+
+        if(!Number.isFinite(v))return;
+
+        const x=i/(samples.length-1)*w;
+        const y=h-(v/max*h);
+
+        if(i===0){
+            ctx.moveTo(x,y);
+        }else{
+            ctx.lineTo(x,y);
+        }
+
+    });
+
+    ctx.stroke();
+}
+
+
+/* =========================
+   SPEED DISPLAY
+========================= */
+
+function setSpeed(v){
+
+    if(!Number.isFinite(v))return;
+
+    speedValue.textContent=v.toFixed(1);
+
+    const max=100;
+
+    const ratio=Math.min(
+        Math.max(v/max,0),
+        1
+    );
+
+    progress.style.strokeDashoffset=
+        565-(565*ratio);
+
+    samples.push(v);
+
+    if(samples.length>150){
+        samples.shift();
+    }
+
+    draw();
+}
+
+
+/* =========================
+   MEDIAN
+========================= */
+
+function median(a){
+
+    const valid=a.filter(
+        x=>Number.isFinite(x)
+    );
+
+    if(!valid.length)return 0;
+
+    const b=[...valid].sort(
+        (x,y)=>x-y
+    );
+
+    const m=Math.floor(b.length/2);
+
+    return b.length%2
+        ?b[m]
+        :(b[m-1]+b[m])/2;
+}
+
+
+/* =========================
+   PING
+========================= */
+
+async function pingTest(){
+
+    phase.textContent="📡 Mengukur ping...";
+    $("live").textContent="PING";
+
+    let times=[];
+
+    for(let i=0;i<6;i++){
+
+        if(stopped)break;
+
+        const t=performance.now();
+
+        try{
+
+            await fetch(
+                "https://speed.cloudflare.com/cdn-cgi/trace?x="+Math.random(),
+                {
+                    cache:"no-store",
+                    mode:"cors"
+                }
+            );
+
+            const ms=
+                performance.now()-t;
+
+            if(Number.isFinite(ms)){
+                times.push(ms);
+            }
+
+        }catch(e){}
+
+    }
+
+    if(times.length){
+
+        const p=median(times);
+
+        $("ping").textContent=
+            p.toFixed(0);
+
+        let diffs=[];
+
+        for(let i=1;i<times.length;i++){
+
+            diffs.push(
+                Math.abs(
+                    times[i]-times[i-1]
+                )
+            );
+
+        }
+
+        $("jitter").textContent=
+            median(diffs).toFixed(1);
+
+    }else{
+
+        $("ping").textContent="--";
+        $("jitter").textContent="--";
+
+    }
+
+    return times;
+}
+
+
+/* =========================
+   DOWNLOAD
+========================= */
+
+async function downloadTest(){
+
+    phase.textContent="⬇️ Mengukur download...";
+    $("live").textContent="DOWNLOAD";
+
+    let results=[];
+
+    for(let i=0;i<6;i++){
+
+        if(stopped)break;
+
+        try{
+
+            const size=8*1024*1024;
+
+            const t=performance.now();
+
+            const r=await fetch(
+                DOWN+
+                "?bytes="+
+                size+
+                "&x="+
+                Math.random(),
+                {
+                    cache:"no-store"
+                }
+            );
+
+            if(!r.body)continue;
+
+            const reader=
+                r.body.getReader();
+
+            let bytes=0;
+
+            while(true){
+
+                const {done,value}=
+                    await reader.read();
+
+                if(done)break;
+
+                if(value){
+                    bytes+=value.length;
+                }
+
+                const sec=
+                    (performance.now()-t)/1000;
+
+                if(sec>0){
+
+                    const mbps=
+                        bytes*8/
+                        sec/
+                        1000000;
+
+                    setSpeed(mbps);
+                }
+
+                if(stopped){
+
+                    try{
+                        await reader.cancel();
+                    }catch(e){}
+
+                    break;
+                }
+
+            }
+
+            const sec=
+                (performance.now()-t)/1000;
+
+            if(sec>0 && bytes>0){
+
+                const mbps=
+                    bytes*8/
+                    sec/
+                    1000000;
+
+                if(Number.isFinite(mbps)){
+                    results.push(mbps);
+                }
+
+            }
+
+        }catch(e){}
+
+    }
+
+    finalDownload=median(results);
+
+    return finalDownload;
+}
+
+
+/* =========================
+   UPLOAD
+========================= */
+
+async function uploadTest(){
+
+    phase.textContent="⬆️ Mengukur upload...";
+    $("live").textContent="UPLOAD";
+
+    let results=[];
+
+    /*
+      Ukuran dibuat 2 MB supaya
+      upload lebih ringan dan tidak
+      mudah stuck di HP.
+    */
+
+    const data=
+        new Uint8Array(2*1024*1024);
+
+    for(let i=0;i<6;i++){
+
+        if(stopped)break;
+
+        try{
+
+            const t=performance.now();
+
+            const controller=
+                new AbortController();
+
+            const timeout=
+                setTimeout(
+                    ()=>controller.abort(),
+                    12000
+                );
+
+            await fetch(
+                UP+"?x="+Math.random(),
+                {
+                    method:"POST",
+                    body:data,
+                    cache:"no-store",
+                    signal:controller.signal
+                }
+            );
+
+            clearTimeout(timeout);
+
+            const sec=
+                (performance.now()-t)/1000;
+
+            if(sec>0){
+
+                const mbps=
+                    data.length*8/
+                    sec/
+                    1000000;
+
+                if(Number.isFinite(mbps)){
+
+                    results.push(mbps);
+
+                    setSpeed(mbps);
+                }
+
+            }
+
+        }catch(e){}
+
+    }
+
+    finalUpload=median(results);
+
+    return finalUpload;
+}
+
+
+/* =========================
+   QUALITY
+========================= */
+
+function getQuality(d,p){
+
+    if(!Number.isFinite(d))return"⚠️ ERROR";
+
+    if(d>=100 && p<30)
+        return"🚀 EXCELLENT";
+
+    if(d>=30 && p<60)
+        return"👍 GOOD";
+
+    if(d>=10)
+        return"🙂 FAIR";
+
+    return"🐢 POOR";
+}
+
+
+/* =========================
+   SAVE
+========================= */
+
+function save(){
+
+    let history=[];
+
+    try{
+
+        history=
+            JSON.parse(
+                localStorage.getItem("dinotest")||"[]"
+            );
+
+        if(!Array.isArray(history)){
+            history=[];
+        }
+
+    }catch(e){
+
+        history=[];
+
+    }
+
+    history.unshift({
+
+        date:
+            new Date()
+            .toLocaleString("id-ID"),
+
+        ping:
+            $("ping").textContent,
+
+        jitter:
+            $("jitter").textContent,
+
+        loss:
+            $("loss").textContent,
+
+        download:
+            Number.isFinite(finalDownload)
+                ?finalDownload.toFixed(2)
+                :"0.00",
+
+        upload:
+            Number.isFinite(finalUpload)
+                ?finalUpload.toFixed(2)
+                :"0.00"
+
+    });
+
+    localStorage.setItem(
+        "dinotest",
+        JSON.stringify(
+            history.slice(0,20)
+        )
+    );
+
+    load();
+}
+
+
+/* =========================
+   LOAD HISTORY
+========================= */
+
+function load(){
+
+    let h=[];
+
+    try{
+
+        h=
+            JSON.parse(
+                localStorage.getItem("dinotest")||"[]"
+            );
+
+        if(!Array.isArray(h)){
+            h=[];
+        }
+
+    }catch(e){
+
+        h=[];
+
+    }
+
+    if(!h.length){
+
+        $("history").textContent=
+            "Belum ada riwayat.";
+
+        $("bestDown").textContent="--";
+        $("bestUp").textContent="--";
+        $("bestPing").textContent="--";
+
+        return;
+    }
+
+    $("history").innerHTML=
+        h.map(x=>{
+
+            const d=
+                Number(x.download);
+
+            const u=
+                Number(x.upload);
+
+            return `
+            <div class="history-item">
+
+                <span>
+                    ${x.date||"-"}
+                </span>
+
+                <span class="history-result">
+                    ↓ ${
+                        Number.isFinite(d)
+                        ?d.toFixed(2)
+                        :"--"
+                    } Mbps
+                    <br>
+                    ↑ ${
+                        Number.isFinite(u)
+                        ?u.toFixed(2)
+                        :"--"
+                    } Mbps
+                </span>
+
+            </div>
+            `;
+
+        }).join("");
+
+
+    const valid=
+        h.filter(x=>
+            Number.isFinite(
+                Number(x.download)
+            ) &&
+            Number.isFinite(
+                Number(x.upload)
+            ) &&
+            Number.isFinite(
+                Number(x.ping)
+            )
+        );
+
+
+    if(!valid.length){
+
+        $("bestDown").textContent="--";
+        $("bestUp").textContent="--";
+        $("bestPing").textContent="--";
+
+        return;
+    }
+
+
+    const bd=
+        Math.max(
+            ...valid.map(
+                x=>Number(x.download)
+            )
+        );
+
+    const bu=
+        Math.max(
+            ...valid.map(
+                x=>Number(x.upload)
+            )
+        );
+
+    const bp=
+        Math.min(
+            ...valid.map(
+                x=>Number(x.ping)
+            )
+        );
+
+
+    $("bestDown").textContent=
+        bd.toFixed(2);
+
+    $("bestUp").textContent=
+        bu.toFixed(2);
+
+    $("bestPing").textContent=
+        bp.toFixed(0);
+}
+
+
+/* =========================
+   START TEST
+========================= */
+
+async function startTest(){
+
+    if(running)return;
+
+    running=true;
+    stopped=false;
+
+    samples=[];
+
+    finalDownload=0;
+    finalUpload=0;
+
+    start.disabled=true;
+    stop.disabled=false;
+
+    $("resultCard")
+        .classList
+        .add("hidden");
+
+    $("ping").textContent="--";
+    $("jitter").textContent="--";
+    $("loss").textContent="0";
+
+    speedValue.textContent="0.0";
+
+    progress.style.strokeDashoffset="565";
+
+    $("live").textContent="TEST";
+
+    await pingTest();
+
+    if(stopped){
+        finish();
+        return;
+    }
+
+    await downloadTest();
+
+    if(stopped){
+        finish();
+        return;
+    }
+
+    await uploadTest();
+
+    finish();
+}
+
+
+/* =========================
+   FINISH
+========================= */
+
+function finish(){
+
+    running=false;
+
+    stop.disabled=true;
+    start.disabled=false;
+
+    $("live").textContent="DONE";
+
+
+    if(
+        !Number.isFinite(finalDownload) ||
+        !Number.isFinite(finalUpload) ||
+        finalDownload<=0 ||
+        finalUpload<=0
+    ){
+
+        phase.textContent=
+            stopped
+            ?"⛔ Tes dihentikan"
+            :"⚠️ Tes gagal / koneksi bermasalah";
+
+        return;
+    }
+
+
+    phase.textContent=
+        "✅ Tes selesai";
+
+
+    $("finalDown").textContent=
+        finalDownload.toFixed(2)+" Mbps";
+
+    $("finalUp").textContent=
+        finalUpload.toFixed(2)+" Mbps";
+
+
+    $("finalPing").textContent=
+        $("ping").textContent;
+
+    $("finalJitter").textContent=
+        $("jitter").textContent;
+
+    $("finalLoss").textContent=
+        $("loss").textContent;
+
+
+    const p=
+        Number($("ping").textContent);
+
+
+    $("quality").textContent=
+        getQuality(
+            finalDownload,
+            Number.isFinite(p)?p:999
+        );
+
+
+    $("resultCard")
+        .classList
+        .remove("hidden");
+
+
+    save();
+}
+
+
+/* =========================
+   STOP
+========================= */
+
+function stopTest(){
+
+    if(!running)return;
+
+    stopped=true;
+
+    phase.textContent=
+        "⛔ Menghentikan tes...";
+
+}
+
+
+/* =========================
+   RETRY
+========================= */
+
+$("retry").onclick=()=>{
+
+    if(running)return;
+
+    startTest();
+
+};
+
+
+/* =========================
+   SHARE
+========================= */
+
+$("share").onclick=async()=>{
+
+    const text=
+`🦖 DinoTest V6
+
+⬇️ Download: ${finalDownload.toFixed(2)} Mbps
+⬆️ Upload: ${finalUpload.toFixed(2)} Mbps
+📡 Ping: ${$("ping").textContent} ms
+📊 Jitter: ${$("jitter").textContent} ms
+📶 Packet Loss: ${$("loss").textContent}%
+
+${$("quality").textContent}
+
+DinoTest V6`;
+
+
+    if(navigator.share){
+
+        try{
+
+            await navigator.share({
+
+                title:"DinoTest V6 Result",
+
+                text:text
+
+            });
+
+        }catch(e){}
+
+    }else{
+
+        try{
+
+            await navigator.clipboard
+                .writeText(text);
+
+            alert(
+                "Hasil tes sudah disalin."
+            );
+
+        }catch(e){
+
+            alert(text);
+
+        }
+
+    }
+
+};
+
+
+/* =========================
+   CLEAR
+========================= */
+
+$("clear").onclick=()=>{
+
+    if(
+        confirm(
+            "Hapus semua riwayat tes?"
+        )
+    ){
+
+        localStorage.removeItem(
+            "dinotest"
+        );
+
+        load();
+    }
+
+};
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+$("start").onclick=startTest;
+$("stop").onclick=stopTest;
+
+
+/* =========================
+   INIT
+========================= */
+
+resize();
+load();
+
+</script>
+
+</body>
+</html>
